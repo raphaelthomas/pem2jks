@@ -11,24 +11,32 @@ $|=1;
 $Expect::Log_Stdout = 0;
 
 
-my $verbose;
+my $quiet;
 my $password;
 my $private_key;
 my @certificates;
 
 my $result = GetOptions(
-    'v|verbose'  => \$verbose,
+    'q|quiet'  => \$quiet,
     'k|private-key=s' => \$private_key,
     'c|certificate=s' => \@certificates,
     'p|password=s' => \$password,
 );
 
+unless ((-e $private_key) and (scalar(@certificates) > 0)
+        and (-e $certificates[0])
+        and length($password) >= 6
+) {
+    print "Usage: ./pem2jks.pl -p password -k /path/to/private_key.pem "
+        ."-c /path/to/certificate.pem [-c /path/to/other/certificates.pem]\n";
+    exit 1;
+}
 
 my $command;
 my $exp;
 
 
-print "Setting password for private key...";
+$quiet or print "Setting password for private key...";
 
 $command = "openssl rsa -in $private_key -des3 -out tmp_key.pem";
 
@@ -40,10 +48,10 @@ $exp->expect(
 );
 $exp->soft_close();
 
-print "done!\n";
+$quiet or print "done!\n";
 
 
-print "Creating pkcs12 keystore with private key and first certificate...";
+$quiet or print "Creating pkcs12 keystore with private key and first certificate...";
 
 my $certificate = shift @certificates;
 $command = "openssl pkcs12 -export -in $certificate -inkey tmp_key.pem -out keystore.p12";
@@ -57,10 +65,10 @@ $exp->expect(
 );
 $exp->soft_close();
 
-print "done!\n";
+$quiet or print "done!\n";
 
 
-print "Converting pkcs12 keystore to Java keystore...";
+$quiet or print "Converting pkcs12 keystore to Java keystore...";
 
 $command = "keytool -importkeystore -srckeystore keystore.p12 "
     ."-srcstoretype pkcs12 -destkeystore keystore.jks -deststoretype JKS";
@@ -74,11 +82,11 @@ $exp->expect(
 );
 $exp->soft_close();
 
-print "done!\n";
+$quiet or print "done!\n";
 
 
 foreach my $certificate (@certificates) {
-    print "Importing $certificate...";
+    $quiet or print "Importing $certificate...";
     my $alias = $certificate;
 
     $command = "keytool -import -alias $alias -keystore keystore.jks -file $certificate";
@@ -92,7 +100,7 @@ foreach my $certificate (@certificates) {
     );
     $exp->soft_close();
 
-    print "done!\n";
+    $quiet or print "done!\n";
 }
 
 `rm tmp_key.pem keystore.p12`;
