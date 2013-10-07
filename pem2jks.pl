@@ -23,14 +23,16 @@ my $result = GetOptions(
     'p|password=s' => \$password,
 );
 
-unless ((-e $private_key) and (scalar(@certificates) > 0)
-        and (-e $certificates[0])
-        and length($password) >= 6
+unless ((defined $private_key) and (-e $private_key) and
+        (scalar(@certificates) > 0) and (-e $certificates[0]) and
+        length($password) >= 6 and scalar(@ARGV) == 1
 ) {
     print "Usage: ./pem2jks.pl -p password -k /path/to/private_key.pem "
-        ."-c /path/to/certificate.pem [-c /path/to/other/certificates.pem]\n";
+        ."-c /path/to/certificate.pem [-c /path/to/other/certificates.pem] output-filename\n";
     exit 1;
 }
+
+my $output_file = $ARGV[0];
 
 my $command;
 my $exp;
@@ -71,7 +73,7 @@ $quiet or print "done!\n";
 $quiet or print "Converting pkcs12 keystore to Java keystore...";
 
 $command = "keytool -importkeystore -srckeystore keystore.p12 "
-    ."-srcstoretype pkcs12 -destkeystore keystore.jks -deststoretype JKS";
+    ."-srcstoretype pkcs12 -destkeystore $output_file -deststoretype JKS";
 
 $exp = Expect->spawn($command);
 $exp->expect(
@@ -89,8 +91,7 @@ foreach my $certificate (@certificates) {
     $quiet or print "Importing $certificate...";
     my $alias = $certificate;
 
-    $command = "keytool -import -alias $alias -keystore keystore.jks -file $certificate";
-    $command = "keytool -import -keystore keystore.jks -file $certificate";
+    $command = "keytool -import -keystore $output_file -file $certificate";
 
     $exp = Expect->spawn($command);
     $exp->expect(
