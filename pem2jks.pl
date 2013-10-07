@@ -1,10 +1,11 @@
 #!/usr/bin/perl
 ################################################################################
 #
-# pem2jks.pl version 0.1
+# pem2jks.pl version 0.2
 #
 # Written by Raphael Seebacher raphael@seebachers.ch
 # Copyright (c) 2013 Raphael Seebacher
+# All Rights Reserved.
 #
 ################################################################################
 
