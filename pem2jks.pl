@@ -14,6 +14,8 @@ use warnings;
 
 use Expect;
 use Getopt::Long;
+use File::Path qw(make_path);
+use File::Basename;
 
 
 $|=1;
@@ -80,6 +82,8 @@ $quiet or print "done!\n";
 
 
 $quiet or print "Converting pkcs12 keystore to Java keystore...";
+
+make_path(dirname($output_file)) if (! -d dirname($output_file));
 
 $command = "keytool -importkeystore -srckeystore keystore.p12 "
     ."-srcstoretype pkcs12 -destkeystore $output_file -deststoretype JKS";
